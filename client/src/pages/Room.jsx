@@ -16,6 +16,20 @@ const Room = ({ username, room, socket }) => {
   const [message, setMessage] = useState("");
   const boxDivRef = useRef(null);
 
+  const getOldMessage = async () => {
+    const response = await fetch(`${import.meta.env.VITE_SERVER}/chat/${room}`);
+    if (response.status === 403) {
+      return navigate("/");
+    }
+
+    const data = await response.json();
+    setReceivedMessage((prev) => [...prev, ...data]);
+  };
+
+  useEffect((_) => {
+    getOldMessage();
+  }, []);
+
   useEffect(
     (_) => {
       //send joined userinfo to server

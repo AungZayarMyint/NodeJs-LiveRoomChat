@@ -1,11 +1,26 @@
 const express = require("express");
 const socketIO = require("socket.io");
 const cors = require("cors");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
 const formatMessage = require("./utils/formatMSG");
+const {
+  saveUser,
+  getDisconnectUser,
+  getSameRoomUsers,
+} = require("./utils/user");
+
+const Message = require("./models/Message");
+const messageController = require("./controllers/message");
 
 const app = express();
 app.use(cors());
+app.get("/chat/:roomName", messageController.getOldMessage);
+
+mongoose.connect(process.env.MONGO_URL).then((_) => {
+  console.log("Connected to database");
+});
 
 const server = app.listen(4000, (_) => {
   console.log("Server is runnig at port : 4000");
@@ -14,26 +29,6 @@ const server = app.listen(4000, (_) => {
 const io = socketIO(server, {
   cors: "*",
 });
-
-const users = [];
-
-const saveUser = (id, username, room) => {
-  const user = { id, username, room };
-
-  users.push(user);
-  return user;
-};
-
-const getDisconnectUser = (id) => {
-  const index = users.findIndex((user) => user.id === id);
-  if (index !== -1) {
-    return users.splice(index, 1)[0];
-  }
-};
-
-const getSameRoomUsers = (room) => {
-  return users.filter((user) => user.room === room);
-};
 
 //run when client-server connected
 io.on("connection", (socket) => {
@@ -59,9 +54,16 @@ io.on("connection", (socket) => {
     socket.on("message_send", (data) => {
       //send baack message to client
       io.to(user.room).emit("message", formatMessage(user.username, data));
+
+      //store message in database
+      Message.create({
+        username: user.username,
+        message: data,
+        room: user.room,
+      });
     });
 
-    //send room users
+    //send room users on join room
     io.to(user.room).emit("room_users", getSameRoomUsers(user.room));
   });
 
@@ -74,6 +76,8 @@ io.on("connection", (socket) => {
         "message",
         formatMessage(BOT, `${user.username} left the room.`)
       );
+      //update room users when disconnect
+      io.to(user.room).emit("room_users", getSameRoomUsers(user.room));
     }
   });
 });
