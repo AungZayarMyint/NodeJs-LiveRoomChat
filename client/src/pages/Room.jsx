@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChatBubbleLeftRightIcon,
   UserGroupIcon,
@@ -6,14 +6,28 @@ import {
   ArrowRightStartOnRectangleIcon,
   PaperAirplaneIcon,
 } from "@heroicons/react/24/solid";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
-const Room = ({ username, room }) => {
+const Room = ({ username, room, socket }) => {
+  const navigate = useNavigate();
   const [roomUsers, setRoomUsers] = useState(["user1", "user2", "user3"]);
-  const [receivedMessage, setReceivedMessage] = useState([
-    "user1",
-    "user2",
-    "user3",
-  ]);
+  const [receivedMessage, setReceivedMessage] = useState([]);
+
+  useEffect(
+    (_) => {
+      socket.on("message", (data) => {
+        setReceivedMessage((prev) => [...prev, data]);
+      });
+
+      return () => socket.disconnect();
+    },
+    [socket]
+  );
+
+  const leaveRoom = () => {
+    navigate("/");
+  };
 
   return (
     <section className="flex gap-4 h-screen">
@@ -44,6 +58,7 @@ const Room = ({ username, room }) => {
         <button
           type="button"
           className="absolute bottom-0 p-2.5 flex items-center gap-1 w-full mx-2 mb-2 text-lg "
+          onClick={leaveRoom}
         >
           {" "}
           <ArrowRightStartOnRectangleIcon width={30} /> Leave Room
@@ -58,10 +73,10 @@ const Room = ({ username, room }) => {
               key={i}
               className="text-white bg-gray-500 mb-3 px-3 py-2 w-3/4 rounded-br-3xl rounded-tl-3xl "
             >
-              <p className="text-sm font-medium font-mono">from bot</p>
-              <p className="text-lg font-medium">{msg}</p>
+              <p className="text-sm font-medium font-mono">{msg.username}</p>
+              <p className="text-lg font-medium">{msg.message}</p>
               <p className="text-sm font-mono font-medium text-right">
-                less than a minute
+                {formatDistanceToNow(new Date(msg.send_at))}
               </p>
             </div>
           ))}

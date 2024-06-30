@@ -1,8 +1,9 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
+import io from "socket.io-client";
 
-const Welcome = ({ username, setUsername, room, setRoom }) => {
+const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
   const navigate = useNavigate();
+
   const joinRoom = (e) => {
     e.preventDefault();
     if (
@@ -10,11 +11,15 @@ const Welcome = ({ username, setUsername, room, setRoom }) => {
       room !== "select-room" &&
       room.trim().length > 0
     ) {
+      const socket = io.connect("http://localhost:4000");
+      setSocket(socket);
+
       navigate("/chat", { replace: true });
     } else {
       alert("Fill all user info.");
     }
   };
+
   return (
     <section className="w-full h-screen flex items-center justify-center">
       <div className="w-1/2 bg-gray-50 p-10 rounded-lg">
