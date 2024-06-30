@@ -22,8 +22,8 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
 
   return (
     <section className="w-full h-screen flex items-center justify-center">
-      <div className="w-1/2 bg-gray-50 p-10 rounded-lg">
-        <h1 className="text-5xl font-bold text-center text-teal-600 mb-6">
+      <div className="w-1/2 bg-gray-100 p-10 rounded-lg">
+        <h1 className="text-5xl font-bold text-center text-red-600 mb-6">
           ROOM.io
         </h1>
         <form onSubmit={joinRoom}>
@@ -32,7 +32,7 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
               type="text"
               placeholder="username.."
               id="username"
-              className="border-2 border-teal-600 outline-none p-2.5 rounded-lg w-full text-base font-medium"
+              className="border-2 text-gray-600 outline-none p-2.5 rounded-lg w-full text-base font-medium"
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
@@ -40,7 +40,7 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
             <select
               name="room"
               id="room"
-              className="border-2 border-teal-600 text-base font-medium rounded-lg focus:ring-teal-800 block w-full p-2.5 text-center"
+              className="border-2 text-gray-500 text-base font-medium rounded-lg focus:ring-teal-800 block w-full p-2.5 text-center"
               onChange={(e) => setRoom(e.target.value)}
             >
               <option value="select-room"> --- Select Room --- </option>
@@ -48,7 +48,7 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
               <option value="node">Node Js</option>
             </select>
           </div>
-          <button className="text-center text-base text-white bg-teal-600 py-2.5 rounded-lg font-medium w-full">
+          <button className="text-center text-base text-white bg-red-600 py-2.5 rounded-lg font-medium w-full">
             Join Room
           </button>
         </form>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ChatBubbleLeftRightIcon,
   UserGroupIcon,
@@ -11,13 +11,37 @@ import { useNavigate } from "react-router-dom";
 
 const Room = ({ username, room, socket }) => {
   const navigate = useNavigate();
-  const [roomUsers, setRoomUsers] = useState(["user1", "user2", "user3"]);
+  const [roomUsers, setRoomUsers] = useState([]);
   const [receivedMessage, setReceivedMessage] = useState([]);
+  const [message, setMessage] = useState("");
+  const boxDivRef = useRef(null);
 
   useEffect(
     (_) => {
+      //send joined userinfo to server
+      socket.emit("joined_room", { username, room });
+
+      //get message from server
       socket.on("message", (data) => {
         setReceivedMessage((prev) => [...prev, data]);
+      });
+
+      //get room users from server
+      socket.on("room_users", (data) => {
+        let previousRoomUsers = [...roomUsers];
+        data.forEach((user) => {
+          const index = previousRoomUsers.findIndex(
+            (previousUser) => previousUser.id === user.id
+          );
+
+          if (index !== -1) {
+            previousRoomUsers[index] = { ...previousRoomUsers[index], ...data };
+          } else {
+            previousRoomUsers.push(user);
+          }
+
+          setRoomUsers(previousRoomUsers);
+        });
       });
 
       return () => socket.disconnect();
@@ -25,9 +49,25 @@ const Room = ({ username, room, socket }) => {
     [socket]
   );
 
+  const sendMessage = () => {
+    if (message.trim().length > 0) {
+      socket.emit("message_send", message);
+      setMessage("");
+    }
+  };
+
   const leaveRoom = () => {
     navigate("/");
   };
+
+  useEffect(
+    (_) => {
+      if (boxDivRef.current) {
+        boxDivRef.current.scrollTop = boxDivRef.current.scrollHeight;
+      }
+    },
+    [receivedMessage]
+  );
 
   return (
     <section className="flex gap-4 h-screen">
@@ -51,7 +91,8 @@ const Room = ({ username, room, socket }) => {
           {roomUsers.map((user, i) => (
             <p key={i} className="flex items-end gap-1 text-sm my-2">
               {" "}
-              <UserCircleIcon width={24} /> {user}
+              <UserCircleIcon width={24} />{" "}
+              {user.username === username ? "YOU" : user.username}
             </p>
           ))}
         </div>
@@ -67,7 +108,7 @@ const Room = ({ username, room, socket }) => {
 
       {/* right side */}
       <div className="w-full pt-5 relative">
-        <div className="h-[30rem] overflow-y-auto ">
+        <div className="h-[30rem] overflow-y-auto " ref={boxDivRef}>
           {receivedMessage.map((msg, i) => (
             <div
               key={i}
@@ -86,8 +127,10 @@ const Room = ({ username, room, socket }) => {
             type="text"
             placeholder="message.."
             className="w-full outline-none border-b text-lg me-2"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
           />
-          <button type="button">
+          <button type="button" onClick={sendMessage}>
             {" "}
             <PaperAirplaneIcon
               width={24}
